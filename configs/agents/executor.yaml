@@ -1,0 +1,14 @@
+name: action_executor
+role: executor
+model: gpt-4o-mini
+temperature: 0.3
+max_iterations: 20
+tools:
+  - web_search
+  - calculator
+  - current_time
+  - echo
+memory_enabled: true
+memory_window: 15
+timeout_seconds: 300
+retry_attempts: 3

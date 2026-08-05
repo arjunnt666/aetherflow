@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: aetherflow
+  labels:
+    app: aetherflow
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: aetherflow
+  template:
+    metadata:
+      labels:
+        app: aetherflow
+    spec:
+      containers:
+        - name: aetherflow
+          image: aetherflow:0.9.2
+          ports:
+            - containerPort: 8080
+            - containerPort: 9090
+          env:
+            - name: AETHERFLOW_ENV
+              value: production
+          resources:
+            requests:
+              cpu: "500m"
+              memory: "1Gi"
+            limits:
+              cpu: "2"
+              memory: "4Gi"

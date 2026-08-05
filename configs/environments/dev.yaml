@@ -1,0 +1,32 @@
+env: development
+log_level: DEBUG
+
+llm:
+  provider: openai
+  model: gpt-4o
+  temperature: 0.2
+  max_tokens: 4096
+
+memory:
+  backend: hybrid
+  vector_store: qdrant
+  embedding_model: text-embedding-3-small
+  max_working_tokens: 8000
+  semantic_top_k: 8
+  enable_graph: true
+
+security:
+  enable_rbac: false
+  enable_sandbox: true
+  enable_pii_redaction: true
+  audit_log: true
+
+observability:
+  enable_tracing: true
+  enable_metrics: true
+  log_level: DEBUG
+  prometheus_port: 9090
+
+max_concurrent_agents: 16
+default_timeout: 300.0
+enable_self_healing: true

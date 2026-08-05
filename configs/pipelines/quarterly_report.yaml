@@ -1,0 +1,36 @@
+name: quarterly_executive_report
+version: "2.1.0"
+id: pipeline-quarterly-report
+
+triggers:
+  - cron: "0 8 1 * *"
+  - event: "salesforce.opportunity.closed"
+
+stages:
+  - name: gather
+    agent: researcher
+    tools: [web_search]
+    output: raw_data
+  - name: analyze
+    agent: data_analyst
+    depends_on: [gather]
+    tools: [calculator]
+    output: insights
+  - name: draft
+    agent: executor
+    depends_on: [analyze]
+    output: draft_report
+  - name: review
+    agent: critic
+    depends_on: [draft]
+    gates: ["quality > 0.85", "no_pii"]
+    on_fail: revise
+  - name: deliver
+    agent: executor
+    depends_on: [review]
+    tools: [echo]
+
+metadata:
+  owner: strategy-team
+  sla_hours: 4
+  tags: [reporting, executive, automated]

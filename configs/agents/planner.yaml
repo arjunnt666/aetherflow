@@ -1,0 +1,15 @@
+name: strategic_planner
+role: planner
+model: gpt-4o
+temperature: 0.15
+max_iterations: 10
+tools:
+  - web_search
+  - calculator
+system_prompt: |
+  You are a strategic planning agent. Break down complex goals into
+  clear, ordered, dependency-aware steps. Identify risks and required tools.
+memory_enabled: true
+memory_window: 25
+timeout_seconds: 180
+retry_attempts: 2

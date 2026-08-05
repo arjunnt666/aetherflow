@@ -1,0 +1,43 @@
+version: "3.9"
+
+services:
+  aetherflow:
+    build: .
+    ports:
+      - "8080:8080"
+      - "9090:9090"
+    environment:
+      - AETHERFLOW_ENV=development
+      - AETHERFLOW_LOG_LEVEL=INFO
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+    volumes:
+      - ./configs:/app/configs:ro
+      - aether-data:/app/data
+    depends_on:
+      - redis
+      - postgres
+      - qdrant
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: aether
+      POSTGRES_PASSWORD: aether_dev
+      POSTGRES_DB: aetherflow
+    ports:
+      - "5432:5432"
+
+  qdrant:
+    image: qdrant/qdrant:v1.7.4
+    ports:
+      - "6333:6333"
+
+volumes:
+  aether-data:
