@@ -1,18 +1,11 @@
-"""
-AetherFlow — Enterprise Multi-Agent AI Automation Platform
+"""AetherFlow — multi-agent orchestration layout."""
 
-A production-grade framework for building, orchestrating, and scaling
-autonomous multi-agent systems and intelligent workflows.
-"""
-
-from aetherflow.core.engine import AetherEngine
-from aetherflow.core.config import AetherConfig, AgentConfig
 from aetherflow.core.types import (
     AgentRole,
-    TaskStatus,
-    PipelineStatus,
-    Message,
     Artifact,
+    Message,
+    PipelineStatus,
+    TaskStatus,
     TeamTopology,
 )
 
@@ -28,3 +21,19 @@ __all__ = [
     "Artifact",
     "TeamTopology",
 ]
+
+
+def __getattr__(name: str):
+    if name == "AetherEngine":
+        from aetherflow.core.engine import AetherEngine
+
+        return AetherEngine
+    if name == "AetherConfig":
+        from aetherflow.core.config import AetherConfig
+
+        return AetherConfig
+    if name == "AgentConfig":
+        from aetherflow.core.config import AgentConfig
+
+        return AgentConfig
+    raise AttributeError(name)

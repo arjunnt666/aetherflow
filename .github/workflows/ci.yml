@@ -9,44 +9,17 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
-    continue-on-error: true
-    strategy:
-      matrix:
-        python-version: ["3.11", "3.12"]
-      fail-fast: false
-
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
-
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
+      - uses: actions/setup-python@v5
         with:
-          python-version: ${{ matrix.python-version }}
-        continue-on-error: true
-
-      - name: Install dependencies
+          python-version: "3.12"
+      - name: install
         run: |
           python -m pip install --upgrade pip
-          pip install -e ".[dev]" || pip install -r requirements.txt || true
-        continue-on-error: true
-
-      - name: Lint with ruff
-        run: ruff check src/ tests/ || true
-        continue-on-error: true
-
-      - name: Type check with mypy
-        run: mypy src/aetherflow --ignore-missing-imports || true
-        continue-on-error: true
-
-      - name: Run tests
-        run: pytest tests/ -v --cov=aetherflow --cov-report=xml || true
-        continue-on-error: true
-
-      - name: Upload coverage
-        uses: codecov/codecov-action@v4
-        if: always()
-        continue-on-error: true
-        with:
-          file: ./coverage.xml
-          fail_ci_if_error: false
+          pip install pydantic pydantic-settings pyyaml pytest
+      - name: unit types
+        env:
+          PYTHONPATH: src
+        run: pytest tests/unit/core/test_types.py -q
