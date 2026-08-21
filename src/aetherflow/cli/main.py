@@ -58,6 +58,27 @@ def run(
     asyncio.run(_run())
 
 
+@app.command()
+def calc(
+    expression: str = typer.Argument(..., help="Arithmetic expression, e.g. 2+2*3"),
+):
+    """Run the calculator through the agent tool loop (MockLLM, no API key)."""
+
+    async def _run():
+        from aetherflow.core.tool_loop import run_tool_loop
+        from aetherflow.integrations.llm.mock import MockLLMClient
+        from aetherflow.tools.registry import ToolRegistry
+
+        reg = ToolRegistry()
+        await reg.load_builtins()
+        out = await run_tool_loop(MockLLMClient(), reg, expression)
+        console.print(str(out["answer"]))
+        if out.get("steps", 0) < 1 or out.get("answer") is None:
+            raise typer.Exit(code=1)
+
+    asyncio.run(_run())
+
+
 @app.command("list-tools")
 def list_tools():
     async def _list():

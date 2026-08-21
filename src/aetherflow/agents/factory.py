@@ -26,7 +26,7 @@ class AgentFactory:
         if agent_cls is None:
             from aetherflow.agents.executor import ExecutorAgent
             agent_cls = ExecutorAgent
-        return agent_cls(config=config, role=role, memory=memory, tools=tools)
+        return agent_cls(config=config, memory=memory, tools=tools)
 
     @classmethod
     def _populate_registry(cls) -> None:

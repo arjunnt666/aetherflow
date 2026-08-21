@@ -18,8 +18,12 @@ jobs:
       - name: install
         run: |
           python -m pip install --upgrade pip
-          pip install pydantic pydantic-settings pyyaml pytest
-      - name: unit types
+          pip install pydantic pydantic-settings pyyaml pytest pytest-asyncio typer rich
+      - name: unit
         env:
           PYTHONPATH: src
-        run: pytest tests/unit/core/test_types.py -q
+        run: pytest tests/unit/core/test_types.py tests/unit/core/test_tool_loop.py tests/unit/core/test_engine.py tests/unit/tools/test_registry.py -q
+      - name: calc smoke
+        env:
+          PYTHONPATH: src
+        run: python -m aetherflow.cli.main calc "2+2*3"

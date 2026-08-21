@@ -21,6 +21,7 @@ from aetherflow.core.types import (
     Artifact,
     TeamTopology,
     TaskResult,
+    TaskStatus,
 )
 from aetherflow.agents.base import BaseAgent
 from aetherflow.memory.fabric import MemoryFabric
@@ -129,6 +130,17 @@ class AetherEngine:
     ) -> TaskResult:
         if not self._initialized:
             await self.initialize()
+        from aetherflow.core.tool_loop import run_tool_loop
+        from aetherflow.integrations.llm.mock import MockLLMClient
+
+        loop_out = await run_tool_loop(MockLLMClient(), self._tools, goal)
+        if loop_out.get("steps", 0) > 0:
+            return TaskResult(
+                task_id=uuid4(),
+                status=TaskStatus.COMPLETED,
+                output=loop_out,
+                metrics={"tools_called": float(loop_out.get("steps", 0))},
+            )
         if agents is None:
             agents = [
                 self.create_agent(AgentRole.PLANNER),

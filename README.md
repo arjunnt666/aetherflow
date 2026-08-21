@@ -1,15 +1,17 @@
 # aetherflow
 
-multi-agent orchestration layout that can at least import its types.
+multi-agent layout with one tool loop that actually computes something.
 
-agents, tools, pipelines, recovery notes. a lot of modules are still thin. the type tests run in CI without the full LLM stack.
+agents, tools, pipelines. a lot of modules are still thin. the calculator path is not: MockLLM sees `2+2*3`, calls the calculator tool, and the answer is 8.
 
-not a finished platform. a crate-style python package map plus working Message / Artifact models.
+not a finished platform. a crate-style python package plus a working think/act/tool cycle you can pytest.
 
 ## works today
 
 - pydantic types for messages, artifacts, statuses
-- `pytest tests/unit/core/test_types.py`
+- builtin calculator (`2+2*3` is 8, not 12)
+- MockLLM + executor tool loop
+- `aetherflow calc "2+2*3"`
 
 ## does not work yet
 
@@ -19,8 +21,9 @@ not a finished platform. a crate-style python package map plus working Message /
 ## try it
 
 ```bash
-pip install pydantic pydantic-settings pyyaml pytest
-PYTHONPATH=src pytest tests/unit/core/test_types.py -q
+pip install pydantic pydantic-settings pyyaml pytest pytest-asyncio
+PYTHONPATH=src pytest tests/unit/core/test_types.py tests/unit/core/test_tool_loop.py tests/unit/tools/test_registry.py -q
+PYTHONPATH=src python -m aetherflow.cli.main calc "2+2*3"
 ```
 
 ## license

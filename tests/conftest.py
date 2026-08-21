@@ -17,3 +17,10 @@ def agent_config():
     from aetherflow.core.config import AgentConfig
 
     return AgentConfig(name="test-agent", model="mock", temperature=0.0)
+
+
+@pytest.fixture
+def engine():
+    from aetherflow.core.engine import AetherEngine
+
+    return AetherEngine.from_env()
