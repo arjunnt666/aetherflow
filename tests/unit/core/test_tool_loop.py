@@ -17,10 +17,20 @@ async def test_tool_loop_calculator():
 
 
 @pytest.mark.asyncio
-async def test_run_goal_uses_calculator():
+async def test_engine_run_goal_calculator():
     engine = AetherEngine.from_env()
     await engine.initialize()
     result = await engine.run_goal("compute 2+2*3")
     assert result.output["answer"] == 8
     assert result.metrics.get("tools_called", 0) >= 1
     await engine.shutdown()
+
+
+@pytest.mark.asyncio
+async def test_tool_loop_echo():
+    reg = ToolRegistry()
+    await reg.load_builtins()
+    out = await run_tool_loop(MockLLMClient(), reg, "echo hello there")
+    assert out["answer"] == "hello there"
+    assert out["steps"] >= 1
+    assert out["tool_trace"][0]["name"] == "echo"

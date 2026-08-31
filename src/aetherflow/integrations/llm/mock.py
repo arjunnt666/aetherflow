@@ -36,6 +36,14 @@ class MockLLMClient(BaseLLMClient):
                     "model": "mock-llm",
                     "usage": {"prompt_tokens": 4, "completion_tokens": 4, "total_tokens": 8},
                 }
+            if isinstance(data, dict) and "echo" in data:
+                return {
+                    "content": str(data["echo"]),
+                    "tool_calls": [],
+                    "model": "mock-llm",
+                    "usage": {"prompt_tokens": 4, "completion_tokens": 4, "total_tokens": 8},
+                }
+
             return {
                 "content": content,
                 "tool_calls": [],
@@ -51,7 +59,16 @@ class MockLLMClient(BaseLLMClient):
                 "model": "mock-llm",
                 "usage": {"prompt_tokens": 10, "completion_tokens": 8, "total_tokens": 18},
             }
+        echoed = _extract_echo(content)
+        if echoed is not None:
+            return {
+                "content": "",
+                "tool_calls": [{"name": "echo", "arguments": {"message": echoed}}],
+                "model": "mock-llm",
+                "usage": {"prompt_tokens": 10, "completion_tokens": 8, "total_tokens": 18},
+            }
         return {
+
             "content": f"Mock response to: {content[:100]}",
             "tool_calls": [],
             "model": "mock-llm",
@@ -74,3 +91,15 @@ def _extract_expr(text: str) -> Optional[str]:
     if not all(c in allowed for c in expr):
         return None
     return expr
+
+
+def _extract_echo(text: str) -> Optional[str]:
+    if not text:
+        return None
+    stripped = text.strip()
+    lower = stripped.lower()
+    if lower.startswith("echo:"):
+        return stripped.split(":", 1)[1].strip()
+    if lower.startswith("echo "):
+        return stripped[5:].strip()
+    return None

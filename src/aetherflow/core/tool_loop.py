@@ -53,6 +53,8 @@ def _final_answer(content: str, tool_trace: list[dict[str, Any]]) -> Any:
         result = item.get("result") or {}
         if item.get("name") == "calculator" and "result" in result:
             return result["result"]
+        if item.get("name") == "echo" and "echo" in result:
+            return result["echo"]
     text = (content or "").strip()
     if text:
         try:
