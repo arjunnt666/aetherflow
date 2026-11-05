@@ -1,4 +1,4 @@
-"""ToolRegistry — discovers, registers, and invokes tools."""
+"""Discovers, registers, and invokes tools."""
 
 from __future__ import annotations
 import logging

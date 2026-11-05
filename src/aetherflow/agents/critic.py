@@ -1,4 +1,4 @@
-"""CriticAgent — evaluates outputs for quality, safety, and policy compliance."""
+"""Evaluates outputs for quality, safety, and policy compliance."""
 
 from __future__ import annotations
 

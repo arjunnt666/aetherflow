@@ -1,4 +1,4 @@
-"""Working (short-term) memory — token-bounded context window."""
+"""Working (short-term) memory: token-bounded context window."""
 
 from __future__ import annotations
 from typing import Any

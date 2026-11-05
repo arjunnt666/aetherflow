@@ -1,4 +1,4 @@
-"""PlannerAgent — decomposes high-level goals into actionable plans."""
+"""Decomposes high-level goals into actionable plans."""
 
 from __future__ import annotations
 

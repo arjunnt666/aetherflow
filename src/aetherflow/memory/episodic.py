@@ -1,4 +1,4 @@
-"""Episodic memory — stores interaction histories and events over time."""
+"""Stores interaction histories and events over time."""
 
 from __future__ import annotations
 from datetime import datetime, timedelta

@@ -1,5 +1,5 @@
 """
-MemoryFabric — unified interface over working, episodic, and semantic memory.
+Unified interface over working, episodic, and semantic memory.
 """
 
 from __future__ import annotations

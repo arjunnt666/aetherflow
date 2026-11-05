@@ -1,4 +1,4 @@
-"""AetherFlow — multi-agent orchestration layout."""
+"""Multi-agent orchestration layout."""
 
 from aetherflow.core.types import (
     AgentRole,

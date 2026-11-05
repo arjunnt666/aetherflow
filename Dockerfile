@@ -1,9 +1,8 @@
-# AetherFlow — simple production-ish image
-# (full wheel build is overkill for now; this keeps CI green)
+# runs from source; no wheel build
 FROM python:3.12-slim
 
 LABEL org.opencontainers.image.title="AetherFlow"
-LABEL org.opencontainers.image.description="Enterprise Multi-Agent AI Automation Platform"
+LABEL org.opencontainers.image.description="Multi-agent orchestration"
 LABEL org.opencontainers.image.version="0.9.2"
 
 RUN groupadd -r aether && useradd -r -g aether aether

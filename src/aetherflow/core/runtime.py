@@ -1,5 +1,5 @@
 """
-AgentRuntime — manages the lifecycle and resource allocation of agents.
+Manages the lifecycle and resource allocation of agents.
 """
 
 from __future__ import annotations

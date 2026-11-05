@@ -1,5 +1,5 @@
 """
-AetherFlow CLI — entry point for the `aetherflow` command.
+Entry point for the `aetherflow` command.
 """
 
 from __future__ import annotations
@@ -13,7 +13,7 @@ from rich.table import Table
 
 app = typer.Typer(
     name="aetherflow",
-    help="AetherFlow — Enterprise Multi-Agent AI Automation Platform",
+    help="AetherFlow: multi-agent orchestration from the command line",
     add_completion=False,
 )
 console = Console()
@@ -31,10 +31,54 @@ def serve(
     port: int = typer.Option(8080, help="Bind port"),
     config: Optional[str] = typer.Option(None, help="Path to config YAML"),
 ):
-    console.print(f"[green]Starting AetherFlow server on {host}:{port}[/]")
-    console.print("[dim](Server implementation is a stub in this release)[/]")
-    if config:
-        console.print(f"Config: {config}")
+    """Tiny JSON API: POST /run {"goal": "..."} -> TaskResult. GET /health."""
+    import json
+    from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+
+    from aetherflow import AetherEngine
+
+    engine = AetherEngine.from_config(config) if config else AetherEngine.from_env()
+    loop = asyncio.new_event_loop()
+    loop.run_until_complete(engine.initialize())
+
+    class Handler(BaseHTTPRequestHandler):
+        def _send(self, code: int, body: dict) -> None:
+            data = json.dumps(body, default=str).encode()
+            self.send_response(code)
+            self.send_header("content-type", "application/json")
+            self.send_header("content-length", str(len(data)))
+            self.end_headers()
+            self.wfile.write(data)
+
+        def do_GET(self):
+            if self.path == "/health":
+                self._send(200, {"ok": True})
+            else:
+                self._send(404, {"error": "not found"})
+
+        def do_POST(self):
+            if self.path != "/run":
+                return self._send(404, {"error": "not found"})
+            try:
+                n = int(self.headers.get("content-length", 0))
+                goal = json.loads(self.rfile.read(n) or b"{}")["goal"]
+            except (ValueError, KeyError):
+                return self._send(400, {"error": "expected {\"goal\": str}"})
+            # one event loop shared by all requests; runs are serialized
+            result = asyncio.run_coroutine_threadsafe(engine.run_goal(goal), loop)
+            self._send(200, result.result().model_dump(mode="json"))
+
+        def log_message(self, fmt, *args):
+            console.print(f"[dim]{self.address_string()} {fmt % args}[/]")
+
+    import threading
+
+    threading.Thread(target=loop.run_forever, daemon=True).start()
+    console.print(f"listening on http://{host}:{port}")
+    try:
+        ThreadingHTTPServer((host, port), Handler).serve_forever()
+    except KeyboardInterrupt:
+        pass
 
 
 @app.command()
@@ -96,16 +140,25 @@ def list_tools():
 @app.command()
 def doctor():
     console.print("[bold]AetherFlow Doctor[/]\n")
+    import importlib.util
+    import os
+    import sys
+    from pathlib import Path
+
     checks = [
-        ("Python >= 3.11", True),
-        ("pydantic", True),
-        ("Config directory", True),
-        ("LLM API keys", False),
+        ("python >= 3.11", sys.version_info >= (3, 11)),
+        ("pydantic installed", importlib.util.find_spec("pydantic") is not None),
+        ("configs/ directory", Path("configs").is_dir()),
+        (
+            "LLM API key (OPENAI_API_KEY or ANTHROPIC_API_KEY)",
+            bool(os.environ.get("OPENAI_API_KEY") or os.environ.get("ANTHROPIC_API_KEY")),
+        ),
     ]
     for name, ok in checks:
-        status = "[green]✓[/]" if ok else "[yellow]⚠[/]"
-        console.print(f"  {status}  {name}")
-    console.print("\n[dim]Note: This is a diagnostic stub.[/]")
+        status = "[green]ok[/]     " if ok else "[yellow]missing[/]"
+        console.print(f"  {status} {name}")
+    if not checks[-1][1]:
+        console.print("\n[dim]no key set, agents will use the offline mock LLM[/]")
 
 
 if __name__ == "__main__":

@@ -1,11 +1,12 @@
 """
-Orchestrator — coordinates multi-agent execution, task routing,
+Coordinates multi-agent execution, task routing,
 and pipeline stage management.
 """
 
 from __future__ import annotations
 
 import asyncio
+import time
 import logging
 from typing import Any, Optional
 from uuid import uuid4
@@ -29,20 +30,32 @@ class Orchestrator:
         logger.info(f"Starting pipeline {pipeline_id}", extra={"name": getattr(pipeline, "name", None)})
         self._active_pipelines[pipeline_id] = {"status": PipelineStatus.RUNNING, "stages_completed": 0}
         try:
+            started = time.perf_counter()
             stages = getattr(pipeline, "stages", [])
             context: dict[str, Any] = {"inputs": inputs, "artifacts": []}
             for i, stage in enumerate(stages):
                 stage_name = stage.get("name", f"stage-{i}")
                 logger.info(f"Executing stage: {stage_name}")
-                await asyncio.sleep(0.05)
-                context["artifacts"].append({"stage": stage_name, "status": "completed", "output": f"[simulated output for {stage_name}]"})
+                agent = self._agent_for(stage)
+                if agent is None:
+                    raise RuntimeError(f"no agent registered for stage {stage_name!r} (role {stage.get('agent')!r})")
+                prior = {a["stage"]: a["output"] for a in context["artifacts"]}
+                task = {
+                    "goal": stage.get("prompt") or stage_name,
+                    "inputs": inputs,
+                    "depends": {d: prior.get(d) for d in stage.get("depends_on", [])},
+                }
+                result = await agent.run(task)
+                if result.status == TaskStatus.FAILED:
+                    raise RuntimeError(f"stage {stage_name} failed: {result.error}")
+                context["artifacts"].append({"stage": stage_name, "status": "completed", "output": result.output})
                 self._active_pipelines[pipeline_id]["stages_completed"] = i + 1
             self._active_pipelines[pipeline_id]["status"] = PipelineStatus.COMPLETED
             return TaskResult(
                 task_id=uuid4(),
                 status=TaskStatus.COMPLETED,
                 output=context,
-                metrics={"stages": len(stages), "duration_ms": 50.0 * len(stages)},
+                metrics={"stages": float(len(stages)), "duration_ms": (time.perf_counter() - started) * 1000},
             )
         except Exception as e:
             logger.exception(f"Pipeline {pipeline_id} failed")
@@ -54,11 +67,18 @@ class Orchestrator:
         if agent is None:
             return TaskResult(task_id=uuid4(), status=TaskStatus.FAILED, error=f"Agent {agent_id} not found")
         logger.debug(f"Dispatching task to {agent_id}")
-        return TaskResult(
-            task_id=uuid4(),
-            status=TaskStatus.COMPLETED,
-            output={"message": f"Task processed by {agent_id}", "echo": task},
-        )
+        return await agent.run(task)
+
+    def _agent_for(self, stage: dict[str, Any]) -> Any:
+        """Stage `agent` can be an agent id or a role; first match by role wins."""
+        want = stage.get("agent")
+        agent = self.runtime.get_agent(want) if want else None
+        if agent is not None:
+            return agent
+        for a in self.runtime.list_agents():
+            if a.role.value == want:
+                return a
+        return None
 
     def get_pipeline_status(self, pipeline_id: str) -> Optional[dict]:
         return self._active_pipelines.get(pipeline_id)

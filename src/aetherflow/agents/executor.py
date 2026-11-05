@@ -1,4 +1,4 @@
-"""ExecutorAgent — performs concrete actions via tools and LLM calls."""
+"""Performs concrete actions via tools and LLM calls."""
 
 from __future__ import annotations
 
@@ -15,8 +15,7 @@ logger = logging.getLogger("aetherflow.agents.executor")
 
 class ExecutorAgent(BaseAgent):
     def __init__(self, llm: Optional[BaseLLMClient] = None, **kwargs):
-        super().__init__(role=AgentRole.EXECUTOR, **kwargs)
-        self.llm = llm
+        super().__init__(role=AgentRole.EXECUTOR, llm=llm, **kwargs)
 
     async def think(self, context: dict[str, Any]) -> dict[str, Any]:
         goal = context.get("goal") or context.get("input") or context.get("step") or ""
@@ -37,9 +36,5 @@ class ExecutorAgent(BaseAgent):
                 output=out,
                 metrics={"tokens_used": 0.0, "tools_called": float(out.get("steps", 0))},
             )
-        return TaskResult(
-            task_id=uuid4(),
-            status=TaskStatus.COMPLETED,
-            output={"message": "Execution completed (simulated)", "decision": decision},
-            metrics={"tokens_used": 0, "tools_called": 0},
-        )
+        answer = await self.ask(goal)
+        return TaskResult(task_id=uuid4(), status=TaskStatus.COMPLETED, output={"answer": answer})

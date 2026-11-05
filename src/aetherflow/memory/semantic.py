@@ -1,4 +1,4 @@
-"""Semantic memory — vector-based long-term knowledge store."""
+"""Vector-based long-term knowledge store."""
 
 from __future__ import annotations
 import logging

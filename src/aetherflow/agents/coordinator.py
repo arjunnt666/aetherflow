@@ -1,4 +1,4 @@
-"""CoordinatorAgent — manages multi-agent collaboration and consensus."""
+"""Manages multi-agent collaboration and consensus."""
 
 from __future__ import annotations
 

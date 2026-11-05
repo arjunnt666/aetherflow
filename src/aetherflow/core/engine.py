@@ -1,5 +1,5 @@
 """
-AetherEngine — the primary entry point for the AetherFlow platform.
+The primary entry point for the AetherFlow platform.
 
 Provides high-level APIs for creating agents, teams, pipelines, and
 running autonomous workflows.
@@ -14,6 +14,7 @@ from typing import Any, Optional, Sequence
 from uuid import uuid4
 
 from aetherflow.core.config import AetherConfig, AgentConfig
+from aetherflow.integrations.llm import make_client
 from aetherflow.core.orchestrator import Orchestrator
 from aetherflow.core.runtime import AgentRuntime
 from aetherflow.core.types import (
@@ -47,6 +48,7 @@ class AetherEngine:
         self._orchestrator = Orchestrator(self.config, self._runtime)
         self._memory = MemoryFabric(self.config.memory)
         self._tools = ToolRegistry()
+        self._llm = make_client(self.config.llm)
         self._tracer = Tracer(self.config.observability)
         self._teams: dict[str, Any] = {}
         self._initialized = False
@@ -89,7 +91,8 @@ class AetherEngine:
     ) -> BaseAgent:
         from aetherflow.agents.factory import AgentFactory
         cfg = config or AgentConfig(**kwargs)
-        agent = AgentFactory.create(role, cfg, memory=self._memory, tools=self._tools)
+        llm = make_client(cfg.llm) if cfg.llm else self._llm
+        agent = AgentFactory.create(role, cfg, memory=self._memory, tools=self._tools, llm=llm)
         self._runtime.register(agent)
         return agent
 
@@ -119,6 +122,14 @@ class AetherEngine:
     ) -> TaskResult:
         from aetherflow.pipelines.loader import PipelineLoader
         pipeline = PipelineLoader.load(pipeline_path)
+        if not self._initialized:
+            await self.initialize()
+        have = {a.role.value for a in self._runtime.list_agents()}
+        for stage in getattr(pipeline, "stages", []):
+            role = stage.get("agent")
+            if role and role not in have and role in AgentRole._value2member_map_:
+                self.create_agent(role)
+                have.add(role)
         return await self._orchestrator.execute_pipeline(pipeline, inputs or {})
 
     async def run_goal(
@@ -131,9 +142,8 @@ class AetherEngine:
         if not self._initialized:
             await self.initialize()
         from aetherflow.core.tool_loop import run_tool_loop
-        from aetherflow.integrations.llm.mock import MockLLMClient
 
-        loop_out = await run_tool_loop(MockLLMClient(), self._tools, goal)
+        loop_out = await run_tool_loop(self._llm, self._tools, goal)
         if loop_out.get("steps", 0) > 0:
             return TaskResult(
                 task_id=uuid4(),

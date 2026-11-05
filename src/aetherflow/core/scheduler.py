@@ -1,5 +1,5 @@
 """
-Scheduler — handles cron triggers, event-based triggers, and delayed tasks.
+Handles cron triggers, event-based triggers, and delayed tasks.
 """
 
 from __future__ import annotations

@@ -1,4 +1,4 @@
-"""AgentFactory — creates specialized agents from role + config."""
+"""Creates specialized agents from role + config."""
 
 from __future__ import annotations
 
@@ -17,7 +17,14 @@ class AgentFactory:
         cls._registry[role] = agent_cls
 
     @classmethod
-    def create(cls, role: AgentRole | str, config: AgentConfig, memory: Any = None, tools: Any = None) -> BaseAgent:
+    def create(
+        cls,
+        role: AgentRole | str,
+        config: AgentConfig,
+        memory: Any = None,
+        tools: Any = None,
+        llm: Any = None,
+    ) -> BaseAgent:
         if isinstance(role, str):
             role = AgentRole(role)
         if role not in cls._registry:
@@ -26,7 +33,7 @@ class AgentFactory:
         if agent_cls is None:
             from aetherflow.agents.executor import ExecutorAgent
             agent_cls = ExecutorAgent
-        return agent_cls(config=config, memory=memory, tools=tools)
+        return agent_cls(config=config, memory=memory, tools=tools, llm=llm)
 
     @classmethod
     def _populate_registry(cls) -> None:

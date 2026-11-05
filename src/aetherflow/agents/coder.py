@@ -1,4 +1,4 @@
-"""CoderAgent — software engineering specialist."""
+"""Software engineering specialist."""
 
 from __future__ import annotations
 
@@ -23,15 +23,12 @@ class CoderAgent(BaseAgent):
             "approach": "implement_with_tests",
             "language": "python",
             "files_to_touch": [],
+            "task": str(task),
         }
 
     async def act(self, decision: dict[str, Any]) -> TaskResult:
-        return TaskResult(
-            task_id=uuid4(),
-            status=TaskStatus.COMPLETED,
-            output={
-                "code": "# Simulated generated code\nprint('Hello from CoderAgent')\n",
-                "tests": "# Simulated tests\ndef test_example():\n    assert True\n",
-                "explanation": "Generated placeholder implementation.",
-            },
+        task = decision.get("task", "")
+        code = await self.ask(
+            f"Write {decision['language']} code for the task below, followed by pytest tests.\n\n{task}"
         )
+        return TaskResult(task_id=uuid4(), status=TaskStatus.COMPLETED, output={"code": code})

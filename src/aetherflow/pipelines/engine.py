@@ -16,4 +16,4 @@ class PipelineEngine:
         if self.orchestrator:
             result = await self.orchestrator.execute_pipeline(pipeline, inputs or {})
             return result.model_dump() if hasattr(result, "model_dump") else result
-        return {"status": "simulated", "pipeline": pipeline.name}
+        raise RuntimeError("PipelineEngine needs an orchestrator to run stages")

@@ -1,5 +1,5 @@
 """
-BaseAgent — abstract foundation for all AetherFlow agents.
+Abstract foundation for all AetherFlow agents.
 """
 
 from __future__ import annotations
@@ -29,12 +29,14 @@ class BaseAgent(ABC):
         memory: Any = None,
         tools: Any = None,
         agent_id: Optional[str] = None,
+        llm: Any = None,
     ):
         self.agent_id = agent_id or f"{role.value}-{uuid4().hex[:8]}"
         self.role = role
         self.config = config
         self.memory = memory
         self.tools = tools
+        self.llm = llm
         self._state = AgentState(agent_id=self.agent_id, role=role)
         self._history: list[Message] = []
 
@@ -72,6 +74,17 @@ class BaseAgent(ABC):
                 status=TaskStatus.FAILED,
                 error=str(e),
             )
+
+    async def ask(self, prompt: str) -> str:
+        """One-shot completion using the agent's system prompt."""
+        if self.llm is None:
+            raise RuntimeError(f"{self.agent_id} has no LLM client")
+        messages = []
+        if self.config.system_prompt:
+            messages.append({"role": "system", "content": self.config.system_prompt})
+        messages.append({"role": "user", "content": prompt})
+        resp = await self.llm.complete(messages, temperature=self.config.temperature)
+        return resp.get("content", "")
 
     def add_message(self, message: Message) -> None:
         self._history.append(message)
